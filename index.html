@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>LiverCheck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,500;7..72,600&display=swap">
+<style>
+:root{
+  --bg:#F3F6F5; --surface:#FFFFFF; --sunk:#EAF0EE; --ink:#14201E; --muted:#586663; --line:#D6DFDC;
+  --accent:#1D5F74; --accent-ink:#FFFFFF;
+  --good:#2B7F51; --warn:#B57A0C; --bad:#BD3A33; --na:#7A8784;
+  --good-bg:#E3F2E9; --warn-bg:#FBF0DA; --bad-bg:#F9E3E1; --na-bg:#ECEFEE;
+  --good-band:rgba(43,127,81,.11); --warn-band:rgba(181,122,12,.12); --bad-band:rgba(189,58,51,.10);
+  --f-display:"Literata",Georgia,"Times New Roman",serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1514; --surface:#16201E; --sunk:#1C2826; --ink:#E5EDEB; --muted:#98A7A3; --line:#2B3836;
+    --accent:#72B6CB; --accent-ink:#0B1A1F;
+    --good:#5DBF89; --warn:#E2A83C; --bad:#EE746B; --na:#8E9B98;
+    --good-bg:rgba(93,191,137,.14); --warn-bg:rgba(226,168,60,.15); --bad-bg:rgba(238,116,107,.15); --na-bg:rgba(142,155,152,.14);
+    --good-band:rgba(93,191,137,.10); --warn-band:rgba(226,168,60,.10); --bad-band:rgba(238,116,107,.10);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1514; --surface:#16201E; --sunk:#1C2826; --ink:#E5EDEB; --muted:#98A7A3; --line:#2B3836;
+  --accent:#72B6CB; --accent-ink:#0B1A1F;
+  --good:#5DBF89; --warn:#E2A83C; --bad:#EE746B; --na:#8E9B98;
+  --good-bg:rgba(93,191,137,.14); --warn-bg:rgba(226,168,60,.15); --bad-bg:rgba(238,116,107,.15); --na-bg:rgba(142,155,152,.14);
+  --good-band:rgba(93,191,137,.10); --warn-band:rgba(226,168,60,.10); --bad-band:rgba(238,116,107,.10);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body);padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font:600 1.7rem/1.15 var(--f-display);letter-spacing:-.01em}
+h2{font:600 1.25rem/1.2 var(--f-display)}
+h3{font:600 .95rem/1.3 var(--f-body)}
+p{margin:0}
+.muted{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.banner{margin-inline:-16px;padding:10px 16px;background:var(--sunk);border-bottom:1px solid var(--line);font-size:.85rem;color:var(--muted)}
+.banner .in{max-width:920px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.banner strong{color:var(--ink)}
+
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-top:8px}
+.who{display:flex;flex-direction:column;gap:4px}
+.who .meta{color:var(--muted);font-size:.9rem}
+.btn{font:600 .88rem var(--f-body);border-radius:8px;padding:9px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.score{font:500 2.4rem/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.score small{font-size:.9rem;color:var(--muted);font-family:var(--f-body)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.8rem;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.good{color:var(--good);background:var(--good-bg)}
+.pill.warn{color:var(--warn);background:var(--warn-bg)}
+.pill.bad{color:var(--bad);background:var(--bad-bg)}
+.pill.na{color:var(--na);background:var(--na-bg)}
+.gauge{position:relative;height:10px;border-radius:5px;display:flex;overflow:hidden}
+.gauge span{height:100%}
+.gauge-wrap{position:relative;padding-top:4px}
+.marker{position:absolute;top:-2px;width:4px;height:22px;background:var(--ink);border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px var(--surface)}
+.ticks{position:relative;height:16px;font:11px var(--f-mono);color:var(--muted);margin-top:6px}
+.ticks span{position:absolute;transform:translateX(-50%)}
+.change{font-size:.88rem}
+.change b{font-weight:600}
+.note{font-size:.85rem;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+
+section.block{display:flex;flex-direction:column;gap:14px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:11px var(--f-mono)}
+.chart .zl{font:600 10px var(--f-body);letter-spacing:.06em}
+
+form.entry{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:18px}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.group{display:flex;flex-direction:column;gap:10px}
+.group-title{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:500}
+label.f span.u{color:var(--muted);font-weight:400}
+input,select{font:15px var(--f-body);padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+input.num{font-family:var(--f-mono)}
+.msg{font-size:.88rem;min-height:1.2em}
+.msg.err{color:var(--bad)}
+.msg.ok{color:var(--good)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 .8rem var(--f-body);padding:6px 12px;border:0;background:var(--surface);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.88rem}
+th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--sunk)}
+th:first-child,td:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+td .pill{font-size:.75rem}
+.del{border:0;background:none;color:var(--muted);cursor:pointer;font:600 .8rem var(--f-body);padding:4px 6px;border-radius:6px}
+.del:hover{color:var(--bad)}
+
+details.about{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+details.about summary{cursor:pointer;font-weight:600}
+details.about .body{display:flex;flex-direction:column;gap:12px;margin-top:12px;max-width:68ch;font-size:.92rem}
+details.about ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+code{font-family:var(--f-mono);font-size:.85em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:no-preference){.marker{transition:left .5s ease}}
+</style>
+</head>
+<body>
+
+
+<div class="banner"><div class="in">
+  <span><strong>Prototype.</strong> Example data only. Not medical advice and not for clinical use.</span>
+  <span>Entries are saved in this browser only.</span>
+</div></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="who">
+      <span class="label">Liver health tracker</span>
+      <h1 id="pname">Sample patient</h1>
+      <span class="meta" id="pmeta"></span>
+    </div>
+    <div class="row">
+      <label class="sr" for="psel">Patient</label>
+      <select id="psel" style="width:auto;min-width:170px"></select>
+      <button class="btn" type="button" id="padd-open">Add patient</button>
+      <div class="seg" role="group" aria-label="Units">
+        <button type="button" id="u-us" aria-pressed="true">lb · in</button>
+        <button type="button" id="u-metric" aria-pressed="false">kg · cm</button>
+      </div>
+      <button class="btn" type="button" id="reset">Reset all</button>
+    </div>
+  </header>
+
+  <form class="entry" id="padd" hidden novalidate>
+    <div class="group-title"><h2>Add a patient</h2><span class="muted" style="font-size:.82rem">Age and height are used in the scores</span></div>
+    <div class="fields">
+      <label class="f">Name<input type="text" id="p-name" autocomplete="off"></label>
+      <label class="f">Date of birth<input type="date" id="p-dob"></label>
+      <label class="f">Sex<select id="p-sex"><option value="F">Female</option><option value="M">Male</option></select></label>
+      <label class="f" id="p-h-us"><span>Height <span class="u">ft, in</span></span>
+        <span class="row" style="flex-wrap:nowrap"><input class="num" type="number" id="p-ft" min="3" max="8" placeholder="ft"><input class="num" type="number" id="p-in" min="0" max="11.9" step="0.5" placeholder="in"></span></label>
+      <label class="f" id="p-h-m" hidden><span>Height <span class="u">cm</span></span><input class="num" type="number" id="p-cm" step="0.5"></label>
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <p class="msg" id="p-msg" aria-live="polite"></p>
+      <div class="row"><button class="btn" type="button" id="padd-cancel">Cancel</button><button class="btn primary" type="submit">Create patient</button></div>
+    </div>
+  </form>
+
+  <section class="block" aria-labelledby="now-h">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="now-h">Your latest results</h2>
+      <span class="muted" id="asof"></span>
+    </div>
+    <div class="cards">
+      <article class="card" id="card-fli">
+        <div class="card-head">
+          <div><h3>Liver fat</h3><span class="muted" style="font-size:.85rem">Fatty Liver Index (FLI)</span></div>
+          <span class="pill" id="fli-pill"></span>
+        </div>
+        <div class="score num" id="fli-val"></div>
+        <div class="gauge-wrap">
+          <div class="gauge" id="fli-gauge"></div>
+          <div class="marker" id="fli-marker"></div>
+          <div class="ticks" id="fli-ticks"></div>
+        </div>
+        <p class="change" id="fli-change"></p>
+        <p class="note" id="fli-note"></p>
+      </article>
+      <article class="card" id="card-fib">
+        <div class="card-head">
+          <div><h3>Liver scarring</h3><span class="muted" style="font-size:.85rem">FIB-4 index</span></div>
+          <span class="pill" id="fib-pill"></span>
+        </div>
+        <div class="score num" id="fib-val"></div>
+        <div class="gauge-wrap">
+          <div class="gauge" id="fib-gauge"></div>
+          <div class="marker" id="fib-marker"></div>
+          <div class="ticks" id="fib-ticks"></div>
+        </div>
+        <p class="change" id="fib-change"></p>
+        <p class="note" id="fib-note"></p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="trend-h">
+    <h2 id="trend-h">How it has changed</h2>
+    <div class="charts">
+      <div class="chart"><div class="label" style="margin-bottom:8px">Liver fat (FLI, 0–100)</div><svg id="chart-fli" viewBox="0 0 440 220" role="img" aria-label="Fatty Liver Index over time"></svg></div>
+      <div class="chart"><div class="label" style="margin-bottom:8px">Liver scarring (FIB-4)</div><svg id="chart-fib" viewBox="0 0 440 220" role="img" aria-label="FIB-4 over time"></svg></div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="add-h">
+    <h2 id="add-h">Add new results</h2>
+    <form class="entry" id="entry" novalidate>
+      <div class="fields">
+        <label class="f">Date<input type="date" id="f-date" required></label>
+      </div>
+      <div class="group">
+        <div class="group-title"><h3>Body measurements</h3><span class="muted" style="font-size:.82rem">Used for liver fat</span></div>
+        <div class="fields">
+          <label class="f"><span>Weight <span class="u" id="u-wt">lb</span></span><input class="num" type="number" step="0.1" id="f-wt" inputmode="decimal"></label>
+          <label class="f"><span>Waist <span class="u" id="u-waist">in</span></span><input class="num" type="number" step="0.1" id="f-waist" inputmode="decimal"></label>
+        </div>
+      </div>
+      <div class="group">
+        <div class="group-title"><h3>Blood test results</h3><span class="muted" style="font-size:.82rem">Copy these from your lab report or patient portal</span></div>
+        <div class="fields">
+          <label class="f"><span>Triglycerides <span class="u">mg/dL</span></span><input class="num" type="number" step="1" id="f-tg" inputmode="decimal"></label>
+          <label class="f"><span>GGT <span class="u">U/L</span></span><input class="num" type="number" step="1" id="f-ggt" inputmode="decimal"></label>
+          <label class="f"><span>AST <span class="u">U/L</span></span><input class="num" type="number" step="1" id="f-ast" inputmode="decimal"></label>
+          <label class="f"><span>ALT <span class="u">U/L</span></span><input class="num" type="number" step="1" id="f-alt" inputmode="decimal"></label>
+          <label class="f"><span>Platelets <span class="u">×10³/µL</span></span><input class="num" type="number" step="1" id="f-plt" inputmode="decimal"></label>
+        </div>
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <p class="msg" id="f-msg" aria-live="polite">Fill in what you have. Liver fat needs weight, waist, triglycerides and GGT. Scarring needs AST, ALT and platelets.</p>
+        <button class="btn primary" type="submit">Save results</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="block" aria-labelledby="hist-h">
+    <h2 id="hist-h">All entries</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Date</th><th id="th-wt">Weight (lb)</th><th>BMI</th><th id="th-waist">Waist (in)</th><th>TG</th><th>GGT</th><th>AST</th><th>ALT</th><th>Plt</th><th>FLI</th><th>FIB-4</th><th></th></tr></thead>
+      <tbody id="hist"></tbody>
+    </table></div>
+  </section>
+
+  <details class="about">
+    <summary>How these scores work</summary>
+    <div class="body">
+      <p><b>Fatty Liver Index</b> (Bedogni et al., 2006) estimates the chance of fat in the liver from BMI, waist, triglycerides and GGT. Below 30 makes fatty liver unlikely; 60 or above makes it likely; between is uncertain.</p>
+      <p><b>FIB-4</b> (Sterling et al., 2006) estimates the chance of advanced scarring from age, AST, ALT and platelets: <code>age × AST ÷ (platelets × √ALT)</code>. Cutoffs follow the AASLD 2023 guidance: below 1.3 is low risk, 1.3 to 2.67 is indeterminate, above 2.67 is high. From age 65 the low-risk cutoff rises to 2.0.</p>
+      <ul>
+        <li>FIB-4 is not reliable under age 35, during acute illness, or during a sudden spike in liver enzymes.</li>
+        <li>Neither score diagnoses disease. An amber or red result means a clinician should look further, often with an elastography scan (FibroScan).</li>
+        <li>Both scores were built on specific populations. How well they work in the hospital's patient population still needs checking.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<script>
+(function(){
+const KEY = "livercheck-proto-v2";
+const SAMPLE = {
+  units:"us", current:"dana",
+  patients:[{id:"dana",
+  profile:{name:"Dana R. (example)", dob:"1973-05-20", sex:"F", heightCm:168},
+  entries:[
+    {id:1,date:"2025-03-10",wt:98,waist:108,tg:210,ggt:68,ast:48,alt:55,plt:230},
+    {id:2,date:"2025-09-15",wt:93,waist:103,tg:180,ggt:55,ast:40,alt:46,plt:232},
+    {id:3,date:"2026-03-12",wt:88,waist:97,tg:150,ggt:42,ast:33,alt:38,plt:235},
+    {id:4,date:"2026-09-08",wt:82,waist:90,tg:128,ggt:34,ast:27,alt:30,plt:238}
+  ]}]
+};
+let S;
+function load(){try{const r=localStorage.getItem(KEY);if(r){const v=JSON.parse(r);if(v&&Array.isArray(v.patients)&&v.patients.length){S=v;return}}}catch(e){} S=JSON.parse(JSON.stringify(SAMPLE));}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function P(){return S.patients.find(p=>p.id===S.current)||S.patients[0];}
+
+const $=id=>document.getElementById(id);
+const LB=2.20462, IN=2.54;
+const has=v=>typeof v==="number"&&isFinite(v)&&v>0;
+
+function ageAt(dob,date){const b=new Date(dob+"T00:00"),d=new Date(date+"T00:00");let a=d.getFullYear()-b.getFullYear();const m=d.getMonth()-b.getMonth();if(m<0||(m===0&&d.getDate()<b.getDate()))a--;return a;}
+function bmi(e){if(!has(e.wt))return null;const h=P().profile.heightCm/100;return e.wt/(h*h);}
+function fli(e){const b=bmi(e);if(b==null||!has(e.waist)||!has(e.tg)||!has(e.ggt))return null;
+  const lp=0.953*Math.log(e.tg)+0.139*b+0.718*Math.log(e.ggt)+0.053*e.waist-15.745;
+  return Math.exp(lp)/(1+Math.exp(lp))*100;}
+function fib4(e){if(!has(e.ast)||!has(e.alt)||!has(e.plt))return null;return ageAt(P().profile.dob,e.date)*e.ast/(e.plt*Math.sqrt(e.alt));}
+function fibCut(age){return age>=65?2.0:1.3;}
+
+function clsFli(v){if(v==null)return{k:"na",t:"Needs results"};if(v<30)return{k:"good",t:"Fat unlikely"};if(v<60)return{k:"warn",t:"Uncertain"};return{k:"bad",t:"Fat likely"};}
+function clsFib(v,age){if(v==null)return{k:"na",t:"Needs results"};if(age<35)return{k:"na",t:"Not reliable under 35"};
+  if(v<fibCut(age))return{k:"good",t:"Low risk"};if(v<=2.67)return{k:"warn",t:"Indeterminate"};return{k:"bad",t:"High risk"};}
+
+const NOTE={
+  fli:{good:"Fat in the liver is unlikely at this level. Keep checking at your usual visits.",
+       warn:"This score can't rule fatty liver in or out. Weight, waist and triglycerides all move it, so changes here often show up within months.",
+       bad:"Fat in the liver is likely. Ask your care team whether you need an ultrasound and what support is available for weight and diet.",
+       na:"Add weight, waist, triglycerides and GGT to see this score."},
+  fib:{good:"Advanced scarring is unlikely. Your care team may repeat this every 1 to 3 years.",
+       warn:"This range can't answer the question on its own. Ask your care team whether you need a FibroScan or similar test.",
+       bad:"This result should be reviewed by a clinician soon. Contact your care team to arrange follow-up.",
+       na:"Add AST, ALT and platelets to see this score. It is not used under age 35."}
+};
+
+function sorted(){return P().entries.slice().sort((a,b)=>a.date.localeCompare(b.date));}
+function fmtDate(d){return new Date(d+"T00:00").toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});}
+function wtOut(kg){return S.units==="us"?kg*LB:kg} function lenOut(cm){return S.units==="us"?cm/IN:cm}
+
+function gauge(el,marker,ticks,val,max,cuts,labels){
+  const segs=[[0,cuts[0],"--good"],[cuts[0],cuts[1],"--warn"],[cuts[1],max,"--bad"]];
+  el.innerHTML=segs.map(s=>`<span style="width:${(s[1]-s[0])/max*100}%;background:var(${s[2]})"></span>`).join("");
+  ticks.innerHTML=labels.map(l=>`<span style="left:${l/max*100}%">${l}</span>`).join("");
+  if(val==null){marker.hidden=true;return}
+  marker.hidden=false;marker.style.left=Math.min(Math.max(val,0),max)/max*100+"%";
+}
+
+function renderCards(){
+  const E=sorted();
+  const withFli=E.filter(e=>fli(e)!=null), withFib=E.filter(e=>fib4(e)!=null);
+  const lf=withFli[withFli.length-1], pf=withFli[withFli.length-2];
+  const lb=withFib[withFib.length-1], pb=withFib[withFib.length-2];
+  const last=E[E.length-1];
+  $("asof").textContent=last?"Last entry "+fmtDate(last.date):"No entries yet";
+
+  const fv=lf?fli(lf):null, fc=clsFli(fv);
+  $("fli-val").innerHTML=fv==null?"—":fv.toFixed(0)+' <small>of 100</small>';
+  $("fli-pill").className="pill "+fc.k;$("fli-pill").textContent=fc.t;
+  gauge($("fli-gauge"),$("fli-marker"),$("fli-ticks"),fv,100,[30,60],[0,30,60,100]);
+  $("fli-change").innerHTML=lf&&pf?changeText(fli(pf),fv,0,pf.date,true):"";
+  $("fli-note").textContent=NOTE.fli[fc.k];
+
+  const age=lb?ageAt(P().profile.dob,lb.date):ageAt(P().profile.dob,new Date().toISOString().slice(0,10));
+  const bv=lb?fib4(lb):null, bc=clsFib(bv,age);
+  $("fib-val").innerHTML=bv==null?"—":bv.toFixed(2);
+  $("fib-pill").className="pill "+bc.k;$("fib-pill").textContent=bc.t;
+  const c=fibCut(age);
+  gauge($("fib-gauge"),$("fib-marker"),$("fib-ticks"),bv,4,[c,2.67],[0,c,2.67,4]);
+  $("fib-change").innerHTML=lb&&pb?changeText(fib4(pb),bv,2,pb.date,true):"";
+  $("fib-note").textContent=NOTE.fib[bc.k]+(age>=65?" Cutoffs are adjusted for age 65 and over.":"");
+}
+function changeText(a,b,dp,since,lowerBetter){
+  const d=b-a; if(Math.abs(d)<Math.pow(10,-dp)/2)return `No change since ${fmtDate(since)}.`;
+  const better=lowerBetter?d<0:d>0;
+  return `<b style="color:var(${better?"--good":"--bad"})">${d<0?"Down":"Up"} ${Math.abs(d).toFixed(dp)}</b> since ${fmtDate(since)}.`;
+}
+
+function chart(svg,pts,ymax,cuts,fmt){
+  const W=440,H=220,L=36,R=12,T=12,B=28,pw=W-L-R,ph=H-T-B;
+  if(!pts.length){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle">No results yet</text>`;return}
+  const t=pts.map(p=>new Date(p.date+"T00:00").getTime());
+  let t0=Math.min(...t),t1=Math.max(...t); if(t0===t1){t0-=864e5*30;t1+=864e5*30}
+  const pad=(t1-t0)*.06; t0-=pad;t1+=pad;
+  const x=v=>L+(v-t0)/(t1-t0)*pw, y=v=>T+ph-Math.min(Math.max(v,0),ymax)/ymax*ph;
+  let s="";
+  const bands=[[0,cuts[0],"--good-band"],[cuts[0],cuts[1],"--warn-band"],[cuts[1],ymax,"--bad-band"]];
+  bands.forEach(b=>{s+=`<rect x="${L}" y="${y(b[1])}" width="${pw}" height="${y(b[0])-y(b[1])}" fill="var(${b[2]})"/>`});
+  [0,cuts[0],cuts[1],ymax].forEach(v=>{s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`});
+  const lab=[["Green",0,cuts[0],"--good"],["Amber",cuts[0],cuts[1],"--warn"],["Red",cuts[1],ymax,"--bad"]];
+  lab.forEach(l=>{const mid=(y(l[1])+y(l[2]))/2;if(y(l[1])-y(l[2])>14)s+=`<text class="zl" x="${W-R-4}" y="${mid+4}" text-anchor="end" fill="var(${l[3]})" style="fill:var(${l[3]})">${l[0].toUpperCase()}</text>`});
+  const years=[];for(let yr=new Date(t0).getFullYear();yr<=new Date(t1).getFullYear()+1;yr++){[0,6].forEach(m=>{const d=new Date(yr,m,1).getTime();if(d>=t0&&d<=t1)years.push(d)})}
+  years.forEach(d=>{const dt=new Date(d);s+=`<text x="${x(d)}" y="${H-8}" text-anchor="middle">${dt.toLocaleDateString(undefined,{month:"short"})} ${String(dt.getFullYear()).slice(2)}</text>`});
+  const path=pts.map((p,i)=>(i?"L":"M")+x(t[i]).toFixed(1)+" "+y(p.v).toFixed(1)).join(" ");
+  s+=`<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${x(t[i])}" cy="${y(p.v)}" r="${last?5.5:4}" fill="${last?"var(--accent)":"var(--surface)"}" stroke="var(--accent)" stroke-width="2"><title>${fmtDate(p.date)}: ${fmt(p.v,true)}</title></circle>`});
+  const lp=pts[pts.length-1];s+=`<text x="${x(t[t.length-1])}" y="${y(lp.v)-10}" text-anchor="middle" style="fill:var(--ink);font-weight:500">${fmt(lp.v,true)}</text>`;
+  svg.innerHTML=s;
+}
+function renderCharts(){
+  const E=sorted();
+  chart($("chart-fli"),E.filter(e=>fli(e)!=null).map(e=>({date:e.date,v:fli(e)})),100,[30,60],(v)=>v.toFixed(0));
+  const fe=E.filter(e=>fib4(e)!=null);
+  const age=fe.length?ageAt(P().profile.dob,fe[fe.length-1].date):50;
+  chart($("chart-fib"),fe.map(e=>({date:e.date,v:fib4(e)})),4,[fibCut(age),2.67],(v,exact)=>exact?v.toFixed(2):(+v.toFixed(2)).toString());
+}
+function renderTable(){
+  const u=S.units==="us";
+  $("th-wt").textContent="Weight ("+(u?"lb":"kg")+")";$("th-waist").textContent="Waist ("+(u?"in":"cm")+")";
+  const E=sorted().reverse();
+  const c=v=>v==null?"—":v;
+  $("hist").innerHTML=E.map(e=>{
+    const f=fli(e),b=fib4(e),a=ageAt(P().profile.dob,e.date),fc=clsFli(f),bc=clsFib(b,a),bm=bmi(e);
+    return `<tr><td>${fmtDate(e.date)}</td><td class="num">${has(e.wt)?wtOut(e.wt).toFixed(1):"—"}</td><td class="num">${bm?bm.toFixed(1):"—"}</td><td class="num">${has(e.waist)?lenOut(e.waist).toFixed(1):"—"}</td>
+    <td class="num">${c(e.tg)}</td><td class="num">${c(e.ggt)}</td><td class="num">${c(e.ast)}</td><td class="num">${c(e.alt)}</td><td class="num">${c(e.plt)}</td>
+    <td>${f==null?"—":`<span class="pill ${fc.k}">${f.toFixed(0)}</span>`}</td><td>${b==null?"—":`<span class="pill ${bc.k}">${b.toFixed(2)}</span>`}</td>
+    <td><button class="del" data-id="${e.id}" aria-label="Delete entry from ${fmtDate(e.date)}">Delete</button></td></tr>`}).join("")||`<tr><td colspan="12" class="muted">No entries yet.</td></tr>`;
+}
+function renderProfile(){
+  const p=P().profile,age=ageAt(p.dob,new Date().toISOString().slice(0,10));
+  const h=S.units==="us"?(()=>{const tin=p.heightCm/IN;return Math.floor(tin/12)+"′ "+Math.round(tin%12)+"″"})():p.heightCm+" cm";
+  $("pname").textContent=p.name;
+  $("pmeta").textContent=`Age ${age} · ${p.sex==="F"?"Female":"Male"} · Height ${h}`;
+  $("u-wt").textContent=S.units==="us"?"lb":"kg";$("u-waist").textContent=S.units==="us"?"in":"cm";
+  $("u-us").setAttribute("aria-pressed",S.units==="us");$("u-metric").setAttribute("aria-pressed",S.units!=="us");
+}
+function render(){renderPatients();renderProfile();renderCards();renderCharts();renderTable();}
+
+$("u-us").onclick=()=>{S.units="us";save();render()};
+$("u-metric").onclick=()=>{S.units="metric";save();render()};
+$("reset").onclick=()=>{S=JSON.parse(JSON.stringify(SAMPLE));save();render();msg("Sample data restored.","ok")};
+$("hist").addEventListener("click",ev=>{const b=ev.target.closest(".del");if(!b)return;
+  if(b.dataset.confirm){P().entries=P().entries.filter(e=>String(e.id)!==b.dataset.id);save();render();}
+  else{b.dataset.confirm="1";b.textContent="Confirm";b.style.color="var(--bad)";setTimeout(()=>{if(b.isConnected){delete b.dataset.confirm;b.textContent="Delete";b.style.color=""}},3000)}});
+
+function msg(t,k){const m=$("f-msg");m.textContent=t;m.className="msg "+(k||"");}
+const RANGES={wt:[25,350,"Weight"],waist:[40,200,"Waist"],tg:[20,2000,"Triglycerides"],ggt:[3,2000,"GGT"],ast:[3,2000,"AST"],alt:[3,2000,"ALT"],plt:[10,1000,"Platelets"]};
+$("f-date").value=new Date().toISOString().slice(0,10);
+$("entry").addEventListener("submit",ev=>{
+  ev.preventDefault();
+  const d=$("f-date").value; if(!d){msg("Choose the date of these results.","err");return}
+  if(d<P().profile.dob){msg("That date is before the date of birth. Check the date.","err");return}
+  const g=id=>{const v=$(id).value.trim();return v===""?null:Number(v)};
+  const e={id:Date.now(),date:d,wt:g("f-wt"),waist:g("f-waist"),tg:g("f-tg"),ggt:g("f-ggt"),ast:g("f-ast"),alt:g("f-alt"),plt:g("f-plt")};
+  if(S.units==="us"){if(e.wt!=null)e.wt=e.wt/LB;if(e.waist!=null)e.waist=e.waist*IN;}
+  if(Object.keys(RANGES).every(k=>e[k]==null)){msg("Enter at least one measurement or lab value.","err");return}
+  for(const k in RANGES){const v=e[k];if(v==null)continue;const[lo,hi,n]=RANGES[k];
+    if(!(v>=lo&&v<=hi)){msg(`${n} looks out of range. Check the number and the units.`,"err");return}}
+  P().entries.push(e);save();render();
+  ["f-wt","f-waist","f-tg","f-ggt","f-ast","f-alt","f-plt"].forEach(id=>$(id).value="");
+  const parts=[];if(fli(e)!=null)parts.push("liver fat");if(fib4(e)!=null)parts.push("scarring");
+  msg(parts.length?`Saved. Updated your ${parts.join(" and ")} score.`:"Saved. Add the remaining values to calculate a score.","ok");
+});
+function renderPatients(){
+  $("psel").innerHTML=S.patients.map(p=>`<option value="${p.id}"${p.id===S.current?" selected":""}>${p.profile.name.replace(/[<&>"]/g,"")}</option>`).join("");
+  $("p-h-us").hidden=S.units!=="us";$("p-h-m").hidden=S.units==="us";
+}
+$("psel").onchange=()=>{S.current=$("psel").value;save();render();msg("","")};
+$("padd-open").onclick=()=>{$("padd").hidden=false;$("p-name").focus()};
+$("padd-cancel").onclick=()=>{$("padd").hidden=true;$("p-msg").textContent=""};
+$("padd").addEventListener("submit",ev=>{
+  ev.preventDefault();const pm=$("p-msg");pm.className="msg err";
+  const name=$("p-name").value.trim(),dob=$("p-dob").value,sex=$("p-sex").value;
+  let cm=S.units==="us"?(Number($("p-ft").value||0)*12+Number($("p-in").value||0))*IN:Number($("p-cm").value||0);
+  if(!name){pm.textContent="Enter a name.";return}
+  if(!dob||dob>new Date().toISOString().slice(0,10)){pm.textContent="Enter a valid date of birth.";return}
+  if(!(cm>=120&&cm<=230)){pm.textContent="Height looks out of range. Check the number and the units.";return}
+  const id="p"+Date.now();
+  S.patients.push({id,profile:{name,dob,sex,heightCm:Math.round(cm*10)/10},entries:[]});
+  S.current=id;save();
+  ["p-name","p-dob","p-ft","p-in","p-cm"].forEach(i=>$(i).value="");
+  $("padd").hidden=true;pm.textContent="";render();
+  msg("Patient created. Add their first results below.","ok");
+  $("add-h").scrollIntoView({behavior:"smooth",block:"start"});
+});
+load();render();
+})();
+</script>
+
+</body>
+</html>
